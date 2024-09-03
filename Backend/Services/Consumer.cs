@@ -36,28 +36,32 @@ public class ConsumerService
             foreach (var line in lines)
             {
                 var values = line.Split(',');
-                // if (values.Length == 14)
-                // {
-                var document = new BsonDocument
+                if (values.Length >= 14)
                 {
-                    { "1", values[0] },
-                    { "2", values[1] },
-                    { "3", values[2] },
-                    { "4", values[3] },
-                    { "5", values[4] },
-                    { "6", values[5] },
-                    { "7", values[6] },
-                    { "8", values[7] },
-                    { "9", values[8] },
-                    { "10", values[9] },
-                    { "11", values[10] },
-                    { "12", values[11] },
-                    { "13", values[12] },
-                    { "14", values[13] },
-                    // { "15", values[14] }
-                };
-                documents.Add(document);
-                // }
+                    // Try to parse the first value as an integer
+                    if (int.TryParse(values[0], out int id))
+                    {
+                        var document = new BsonDocument
+                        {
+                            { "1", id },
+                            { "2", values[1] },
+                            { "3", values[2] },
+                            { "4", values[3] },
+                            { "5", values[4] },
+                            { "6", values[5] },
+                            { "7", values[6] },
+                            { "8", values[7] },
+                            { "9", values[8] },
+                            { "10", values[9] },
+                            { "11", values[10] },
+                            { "12", values[11] },
+                            { "13", values[12] },
+                            { "14", values[13] },
+                            // { "15", values[14] }
+                        };
+                        documents.Add(document);
+                    }
+                }
             }
 
             if (documents.Count > 0)
