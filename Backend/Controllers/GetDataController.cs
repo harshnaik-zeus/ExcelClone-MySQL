@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -25,16 +26,15 @@ namespace Backend.Controllers
         {
             try
             {
-                var filter = new BsonDocument();
+                var filter = Builders<BsonDocument>.Filter.Empty;
                 var sort = Builders<BsonDocument>.Sort.Ascending("1");
-                var options = new FindOptions<BsonDocument>
-                {
-                    Skip = id,
-                    Limit = 100,
-                    Sort = sort,
-                };
 
-                var result = await _collection.Find(filter).ToListAsync();
+                var result = await _collection
+                    .Find(filter)
+                    .Sort(sort)
+                    .Skip(id)
+                    .Limit(100)
+                    .ToListAsync();
 
                 var formattedResult = new List<Dictionary<string, object>>();
                 foreach (var document in result)
