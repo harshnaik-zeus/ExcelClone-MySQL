@@ -1,19 +1,25 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 public class ConsumerService
 {
     private readonly IModel _channel;
-    private readonly string _connectionString;
+    private readonly IMongoCollection<BsonDocument> _collection;
 
-    public ConsumerService(IModel channel, string connectionString)
+    public ConsumerService(IModel channel, string mongoConnectionString)
     {
         _channel = channel;
-        _connectionString = connectionString;
+
+        // Initialize MongoDB client and collection
+        var mongoClient = new MongoClient(mongoConnectionString);
+        var database = mongoClient.GetDatabase("EmployeeDB");
+        _collection = database.GetCollection<BsonDocument>("employeeinfo");
     }
 
     public void StartConsuming()
@@ -24,38 +30,43 @@ public class ConsumerService
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
             var lines = message.Split('\n');
-            // Console.WriteLine(lines[0]);
 
-            var valuesList = new List<string>();
+            var documents = new List<BsonDocument>();
 
             foreach (var line in lines)
             {
                 var values = line.Split(',');
-                if (values.Length == 15)
+                // if (values.Length == 14)
+                // {
+                var document = new BsonDocument
                 {
-                    var valuesFormatted = string.Join(",", values.Select(v => $"'{v}'"));
-                    valuesList.Add($"({valuesFormatted})");
-                }
+                    { "1", values[0] },
+                    { "2", values[1] },
+                    { "3", values[2] },
+                    { "4", values[3] },
+                    { "5", values[4] },
+                    { "6", values[5] },
+                    { "7", values[6] },
+                    { "8", values[7] },
+                    { "9", values[8] },
+                    { "10", values[9] },
+                    { "11", values[10] },
+                    { "12", values[11] },
+                    { "13", values[12] },
+                    { "14", values[13] },
+                    // { "15", values[14] }
+                };
+                documents.Add(document);
+                // }
             }
 
-            if (valuesList.Count > 0)
+            if (documents.Count > 0)
             {
-                using (var dbConnection = new MySqlConnection(_connectionString))
-                {
-                    await dbConnection.OpenAsync();
-
-                    var query =
-                        $"INSERT INTO employeeinfo (`1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14` ,`15`) VALUES {string.Join(",", valuesList)};UPDATE employeedb.chunkinfo SET recievedchunks = recievedchunks + 1;";
-
-                    using (var command = new MySqlCommand(query, dbConnection))
-                    {
-                        await command.ExecuteNonQueryAsync();
-                    }
-
-                    await dbConnection.CloseAsync();
-                }
+                await _collection.InsertManyAsync(documents);
             }
+            System.Console.WriteLine("got chunk");
         };
+
         _channel.BasicConsume(queue: "csv_queue", autoAck: true, consumer: consumer);
     }
 }

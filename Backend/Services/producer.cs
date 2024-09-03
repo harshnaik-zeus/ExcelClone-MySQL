@@ -1,5 +1,5 @@
-using RabbitMQ.Client;
 using System.Text;
+using RabbitMQ.Client;
 
 public class ProducerService
 {
@@ -15,7 +15,7 @@ public class ProducerService
     public void ProduceChunks(string filePath)
     {
         var chunkNumber = 0;
-        _csvChunkService.GetChunkCount(filePath);
+        // _csvChunkService.GetChunkCount(filePath);
 
         while (true)
         {
@@ -26,10 +26,13 @@ public class ProducerService
             var message = string.Join("\n", chunk);
             var body = Encoding.UTF8.GetBytes(message);
 
-            _channel.BasicPublish(exchange: "", routingKey: "csv_queue", basicProperties: null, body: body);
+            _channel.BasicPublish(
+                exchange: "",
+                routingKey: "csv_queue",
+                basicProperties: null,
+                body: body
+            );
             Console.WriteLine($"{chunkNumber}th chunk sent - chunk recieved");
-
         }
     }
-
 }

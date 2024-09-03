@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Backend.Controllers
 {
@@ -10,46 +11,49 @@ namespace Backend.Controllers
     [Route("api")]
     public class GetDataController : ControllerBase
     {
-        private readonly string _connectionString;
+        private readonly IMongoCollection<BsonDocument> _collection;
 
         public GetDataController()
         {
-            _connectionString = "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var database = mongoClient.GetDatabase("EmployeeDB");
+            _collection = database.GetCollection<BsonDocument>("employeeinfo");
         }
 
         [HttpGet("getPageData")]
         public async Task<ActionResult> GetPageData([FromQuery] int id = 0)
         {
-            using var connection = new MySqlConnection(_connectionString);
             try
             {
-                await connection.OpenAsync();
+                var filter = new BsonDocument();
+                var sort = Builders<BsonDocument>.Sort.Ascending("1");
+                var options = new FindOptions<BsonDocument>
+                {
+                    Skip = id,
+                    Limit = 100,
+                    Sort = sort,
+                };
 
-                string query = $"SELECT * FROM employeedb.employeeinfo ORDER BY `1` ASC LIMIT {id}, 100";
-                using var command = new MySqlCommand(query, connection);
-                using var reader = await command.ExecuteReaderAsync();
+                var result = await _collection.Find(filter).ToListAsync();
 
-                var result = new List<Dictionary<string, object>>();
-
-                while (await reader.ReadAsync())
+                var formattedResult = new List<Dictionary<string, object>>();
+                foreach (var document in result)
                 {
                     var row = new Dictionary<string, object>();
-                    for (int i = 0; i < reader.FieldCount; i++)
+                    var elements = document.Elements;
+                    for (int i = 0; i < elements.Count() - 1; i++)
                     {
-                        row[reader.GetName(i)] = reader.GetValue(i);
+                        var element = elements.ElementAt(i);
+                        row[element.Name] = element.Value.ToString();
                     }
-                    result.Add(row);
+                    formattedResult.Add(row);
                 }
 
-                return Ok(result);
+                return Ok(formattedResult);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
-            }
-            finally
-            {
-                await connection.CloseAsync();
             }
         }
     }

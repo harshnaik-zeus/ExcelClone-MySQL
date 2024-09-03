@@ -48,32 +48,32 @@ public class CsvChunkService
         return chunk;
     }
 
-    public async void GetChunkCount(string filePath)
-    {
-        int lineCount = 0;
+    // public async void GetChunkCount(string filePath)
+    // {
+    //     int lineCount = 0;
 
-        using (var reader = new StreamReader(filePath))
-        {
-            while (reader.ReadLine() != null)
-            {
-                lineCount++;
-            }
-        }
+    //     using (var reader = new StreamReader(filePath))
+    //     {
+    //         while (reader.ReadLine() != null)
+    //         {
+    //             lineCount++;
+    //         }
+    //     }
 
-        var chunkstotal = lineCount / _chunkSize;
+    //     var chunkstotal = lineCount / _chunkSize;
 
-        var connectionString =
-            "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
-        var dbConnection = new MySqlConnection(connectionString);
+    //     var connectionString =
+    //         "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
+    //     var dbConnection = new MySqlConnection(connectionString);
 
-        await dbConnection.OpenAsync();
+    //     await dbConnection.OpenAsync();
 
-        var query =
-            $"DELETE FROM employeedb.chunkinfo; INSERT INTO employeedb.chunkinfo (totalchunks) VALUES('{chunkstotal}');";
-        var command = new MySqlCommand(query, dbConnection);
+    //     var query =
+    //         $"DELETE FROM employeedb.chunkinfo; INSERT INTO employeedb.chunkinfo (totalchunks) VALUES('{chunkstotal}');";
+    //     var command = new MySqlCommand(query, dbConnection);
 
-        var rowsAffected = command.ExecuteNonQuery();
+    //     var rowsAffected = command.ExecuteNonQuery();
 
-        await dbConnection.CloseAsync();
-    }
+    //     await dbConnection.CloseAsync();
+    // }
 }

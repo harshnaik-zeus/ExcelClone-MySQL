@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\harsh.naik\\Desktop\\ExcelClone\\Backend\\Backend2.csproj": {}
+    "C:\\Users\\harsh.naik\\Desktop\\ExcelClone-MongoDB\\Backend\\Backend2.csproj": {}
   },
   "projects": {
-    "C:\\Users\\harsh.naik\\Desktop\\ExcelClone\\Backend\\Backend2.csproj": {
+    "C:\\Users\\harsh.naik\\Desktop\\ExcelClone-MongoDB\\Backend\\Backend2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone\\Backend\\Backend2.csproj",
+        "projectUniqueName": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone-MongoDB\\Backend\\Backend2.csproj",
         "projectName": "Backend2",
-        "projectPath": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone\\Backend\\Backend2.csproj",
+        "projectPath": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone-MongoDB\\Backend\\Backend2.csproj",
         "packagesPath": "C:\\Users\\harsh.naik\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone\\Backend\\obj\\",
+        "outputPath": "C:\\Users\\harsh.naik\\Desktop\\ExcelClone-MongoDB\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\harsh.naik\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -54,6 +54,10 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[8.0.7, )"
+            },
+            "MongoDB.Driver": {
+              "target": "Package",
+              "version": "[2.17.0, )"
             },
             "MySql.Data": {
               "target": "Package",

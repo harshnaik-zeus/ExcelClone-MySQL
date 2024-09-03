@@ -1,9 +1,9 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
-using System.Threading;
-using System.Threading.Tasks;
 
 public class Program
 {
@@ -27,10 +27,13 @@ public class Startup
     {
         // Configuration
         var chunkSize = 5000;
-        var connectionString = "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
+        var mongoConnectionString = "mongodb://localhost:27017";
 
         // Register RabbitMQ services
-        services.AddSingleton<IConnectionFactory>(sp => new ConnectionFactory() { HostName = "localhost" });
+        services.AddSingleton<IConnectionFactory>(sp => new ConnectionFactory()
+        {
+            HostName = "localhost",
+        });
         services.AddSingleton(sp =>
         {
             var factory = sp.GetRequiredService<IConnectionFactory>();
@@ -45,7 +48,10 @@ public class Startup
         // Register custom services
         services.AddSingleton<CsvChunkService>(sp => new CsvChunkService(chunkSize));
         services.AddSingleton<ProducerService>();
-        services.AddSingleton<ConsumerService>(sp => new ConsumerService(sp.GetRequiredService<IModel>(), connectionString));
+        services.AddSingleton<ConsumerService>(sp => new ConsumerService(
+            sp.GetRequiredService<IModel>(),
+            mongoConnectionString
+        ));
 
         // Register the worker as a hosted service
         services.AddHostedService<Worker>();
@@ -54,17 +60,15 @@ public class Startup
         services.AddControllers();
 
         services.AddCors(options =>
-    {
-        options.AddPolicy("AllowAllOrigins",
-            builder =>
-            {
-                builder.AllowAnyOrigin()
-                       .AllowAnyHeader()
-                       .AllowAnyMethod();
-            });
-    });
-
-
+        {
+            options.AddPolicy(
+                "AllowAllOrigins",
+                builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                }
+            );
+        });
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)
@@ -83,6 +87,7 @@ public class Startup
         });
     }
 }
+
 public class Worker : BackgroundService
 {
     private readonly ProducerService _producerService;
