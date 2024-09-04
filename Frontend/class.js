@@ -1048,22 +1048,20 @@ class ExcelSheet {
 		this.drawTable(this.startX, this.startY);
 	}
 
-	async updateCell(x) {
-		var data = [];
-		var arr = [];
-		arr.push(x.data);
-		data.push(arr);
-		var pasteonrow = x.row + 1;
-		var pasteoncol = x.col - 1;
-		const requestBody = {
-			data: data,
-			row: pasteonrow,
-			col: pasteoncol
-		};
 
+	/**
+	 * 
+	 * @param {data of element to be updated} x 
+	 */
+	async updateCell(x) {
+		const requestBody = {
+			data: [[cellData]],
+			row: row + 1,
+			col: col - 1
+		};
 		try {
 			const response = await axios.post('http://localhost:5099/api/PasteData', requestBody);
-			console.log('Success, data pasted', response);
+			console.log('Success, data updated');
 			await this.loadData(this.startX);
 			this.drawTable(this.startX, this.startY);
 		} catch (error) {
@@ -1105,10 +1103,8 @@ class ExcelSheet {
 			this.update = { data: ipbox.value, row: row - 2, col: col };
 		}
 		ipbox.focus();
-
-
-
 	}
+
 	SaveData(event) {
 		// this.data[15][5] = "hello";
 		this.drawTable(this.startX, this.startY);

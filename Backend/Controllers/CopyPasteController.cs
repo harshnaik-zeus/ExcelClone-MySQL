@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Backend.Controllers
 {
@@ -11,12 +11,13 @@ namespace Backend.Controllers
     [Route("api")]
     public class PasteDataController : ControllerBase
     {
-        private readonly string _connectionString;
+        private readonly IMongoCollection<BsonDocument> _collection;
 
         public PasteDataController()
         {
-            _connectionString =
-                "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var database = mongoClient.GetDatabase("EmployeeDB");
+            _collection = database.GetCollection<BsonDocument>("employeeinfo");
         }
 
         public class PasteDataRequest
@@ -29,39 +30,11 @@ namespace Backend.Controllers
         [HttpPost("PasteData")]
         public async Task<ActionResult> PasteData([FromBody] PasteDataRequest request)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var startrow = request.Row;
-            var startcol = request.Col;
-
+            List<List<string>> data = request.Data;
+            int row = request.Row;
+            int col = request.Col;
             try
             {
-                await connection.OpenAsync();
-
-                for (int i = 0; i < request.Data.Count; i++)
-                {
-                    var setClauses = new StringBuilder();
-
-                    for (int j = 0; j < request.Data[i].Count; j++)
-                    {
-                        setClauses.Append($"`{startcol + j + 2}` = @data{i}_{j}, ");
-                    }
-
-                    if (setClauses.Length > 2)
-                        setClauses.Length -= 2;
-
-                    string query = $"UPDATE employeeinfo SET {setClauses} WHERE `{1}` = @row";
-
-                    using var command = new MySqlCommand(query, connection);
-
-                    for (int j = 0; j < request.Data[i].Count; j++)
-                    {
-                        command.Parameters.AddWithValue($"@data{i}_{j}", request.Data[i][j]);
-                    }
-
-                    command.Parameters.AddWithValue("@row", startrow + i);
-                    await command.ExecuteNonQueryAsync();
-                }
-
                 return Ok(new { Status = true, RowsAffected = request.Data.Count });
             }
             catch (Exception ex)
