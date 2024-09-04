@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Backend.Controllers
 {
@@ -10,55 +11,51 @@ namespace Backend.Controllers
     [Route("api")]
     public class DeleteCellsController : ControllerBase
     {
-        private readonly string _connectionString;
+        private readonly IMongoCollection<BsonDocument> _collection;
 
         public DeleteCellsController()
         {
-            _connectionString = "Server=localhost;User ID=root;Password=Interstellar@2014;Database=employeedb";
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var database = mongoClient.GetDatabase("EmployeeDB");
+            _collection = database.GetCollection<BsonDocument>("employeeinfo");
         }
 
-        [HttpDelete("deletecells")]
+        [HttpDelete("deleteCells")]
         public async Task<ActionResult> DeleteCells(
-            [FromQuery] int r1,
-            [FromQuery] int c1,
-            [FromQuery] int r2,
-            [FromQuery] int c2
-            )
+            [FromQuery] int r1 = 0,
+            [FromQuery] int c1 = 0,
+            [FromQuery] int r2 = 0,
+            [FromQuery] int c2 = 0
+        )
         {
-            using var connection = new MySqlConnection(_connectionString);
-
-            if (r1 > r2) (r1, r2) = (r2, r1);
-            if (c1 > c2) (c1, c2) = (c2, c1);
             try
             {
-                await connection.OpenAsync();
+                // Filter to specify rows to update
+                var Mydb = Builders<BsonDocument>.Filter;
+                var filter = Mydb.And(Mydb.Gte("1", r1), Mydb.Lte("1", r2));
 
-                var setClauses = new List<string>();
-                for (int i = c1 + 2; i <= c2 + 2; i++)
+                // List to hold update operations
+                var updateDefinitions = new List<UpdateDefinition<BsonDocument>>();
+
+                // Add Unset operations for each column in the range
+                for (int i = c1; i <= c2; i++)
                 {
-                    setClauses.Add($"`{i}` = ''");
-                }
-                string setClause = string.Join(", ", setClauses);
-
-                string query = $"UPDATE employeeinfo SET {setClause} WHERE `{1}` BETWEEN @r1 AND @r2";
-
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@r1", r1);
-                    command.Parameters.AddWithValue("@r2", r2);
-
-                    await command.ExecuteNonQueryAsync();
+                    updateDefinitions.Add(Builders<BsonDocument>.Update.Unset($"{i}"));
                 }
 
-                return Ok();
+                // Combine all Unset operations into a single update definition
+                var update = Builders<BsonDocument>.Update.Combine(updateDefinitions);
+
+                // Apply the update to all matching documents
+                var result = await _collection.UpdateManyAsync(filter, update);
+
+                return Ok(
+                    new { matchedCount = result.MatchedCount, modifiedCount = result.ModifiedCount }
+                );
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
-            }
-            finally
-            {
-                await connection.CloseAsync();
+                return BadRequest(new { message = ex.Message });
             }
         }
     }
